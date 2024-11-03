@@ -2,24 +2,21 @@ package org.example;
 
 import org.eclipse.paho.client.mqttv3.*;
 
+import java.util.Scanner;
+
 public class Main {
-
     public static void main(String[] args) {
-        String broker = "ssl://694db29983f8479bafa92337d5de0db1.s1.eu.hivemq.cloud:8883"; // Broker qua TLS/SSL
-        String clientId = MqttClient.generateClientId(); // Tạo client ID ngẫu nhiên
-        String topic = "test/20215545"; // Chủ đề muốn subscribe/publish
-
+        String broker = "ssl://694db29983f8479bafa92337d5de0db1.s1.eu.hivemq.cloud:8883";
+        String clientId = "JavaClient";
+        String topic = "IOT_2B";
         try {
-            // Khởi tạo MqttClient
             MqttClient client = new MqttClient(broker, clientId);
-
-            // Thiết lập các tùy chọn kết nối
             MqttConnectOptions options = new MqttConnectOptions();
-            options.setUserName("tranducthien");  // Thay bằng username của bạn
-            options.setPassword("Adung1703".toCharArray());  // Thay bằng password của bạn
+            options.setUserName("adung1703");
+            options.setPassword("Adung1703".toCharArray());
             options.setCleanSession(true); // Tạo phiên làm việc mới mỗi khi kết nối
 
-            // Cài đặt callback để nhận tin nhắn
+            // Nhận tin nhắn
             client.setCallback(new MqttCallback() {
                 @Override
                 public void connectionLost(Throwable cause) {
@@ -40,26 +37,29 @@ public class Main {
             // Kết nối tới broker sử dụng các tùy chọn
             client.connect(options);
             System.out.println("Connected to broker: " + broker);
-
             // Subscribe tới một chủ đề
             client.subscribe(topic);
             System.out.println("Subscribed to topic: " + topic);
 
-            // Tạo tin nhắn và publish tới topic
-            String messageContent = "Hello MQTT from Java!";
-            MqttMessage message = new MqttMessage(messageContent.getBytes());
-            message.setQos(1); // Chất lượng dịch vụ QoS
-            client.publish(topic, message);
-            System.out.println("Message published: " + messageContent);
-
-            // Giữ kết nối mở để nhận tin nhắn
-            Thread.sleep(5000);
+            // Nhập tin nhắn từ bàn phím và publish lên
+            String messageContent = "";
+            while (true) {
+                Scanner scanner = new Scanner(System.in);
+                messageContent = scanner.nextLine();
+                if (messageContent.equals("#")) { // Cho tới khi nhận được "#" thì đóng kết nối
+                    break;
+                }
+                MqttMessage message = new MqttMessage(messageContent.getBytes());
+                message.setQos(1); // Chất lượng dịch vụ QoS
+                client.publish(topic, message);
+                System.out.println("Message published: " + messageContent);
+            }
 
             // Đóng kết nối sau khi hoàn thành
             client.disconnect();
             System.out.println("Disconnected from broker");
 
-        } catch (MqttException | InterruptedException e) {
+        } catch (MqttException e) {
             e.printStackTrace();
         }
     }
